@@ -1,0 +1,12 @@
+{
+  "name": "youtube-clone-backend",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Backend API for Youtube-Clone application using Node.js, Express, MongoDB and Cloudinary",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
