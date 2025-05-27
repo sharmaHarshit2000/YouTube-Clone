@@ -7,7 +7,7 @@ import {
 import { uploadProfile } from "../middleware/multer.js";
 import { protect } from "../middleware/authMiddleware.js";
 
-const router = express.Router;
+const router = express.Router();
 
 router.post("/register", uploadProfile, registerUser);
 router.post("/login", loginUser);

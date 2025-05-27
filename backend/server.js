@@ -3,12 +3,18 @@ import dotenv from "dotenv";
 
 import connectDB from "./config/db.js";
 
+//Routes
+import authRoutes from "./routes/authRoutes.js"
+import channelRoutes from "./routes/channelRoutes.js"
 dotenv.config();
 connectDB();
 const app = express();
 app.use(express.json());
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: true }));
 
+//API Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/channels", channelRoutes);
 
 const PORT = process.env.PORT || 5000;
 

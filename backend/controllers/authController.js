@@ -1,5 +1,6 @@
 import User from "../models/User.js";
-import bcrypt from "bcryptjs";
+import Channel from "../models/Channel.js";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { uploadUserProfileToCloudinary } from "../config/cloudinary.js";
 
@@ -41,7 +42,7 @@ export const loginUser = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const isMatch = await bcrypt(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(401).json({ message: "Invalid credentials" });
 
@@ -74,6 +75,6 @@ export const getMe = async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    res.status(500).json({message: "Server error", errro: err.message})
+    res.status(500).json({ message: "Server error", errro: err.message });
   }
 };
