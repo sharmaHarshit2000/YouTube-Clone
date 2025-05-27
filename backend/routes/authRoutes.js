@@ -1,0 +1,16 @@
+import express from "express";
+import {
+  registerUser,
+  loginUser,
+  getMe,
+} from "../controllers/authController.js";
+import { uploadProfile } from "../middleware/multer.js";
+import { protect } from "../middleware/authMiddleware.js";
+
+const router = express.Router;
+
+router.post("/register", uploadProfile, registerUser);
+router.post("/login", loginUser);
+router.post("/me", protect, getMe);
+
+export default router;

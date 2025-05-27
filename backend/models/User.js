@@ -6,10 +6,10 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profilePic: { type: String },
-    channels: [{ type: mongoose.Schema.Types.ObjecteId, ref: "Channel" }],
+    channels: [{ type: mongoose.Schema.Types.ObjectId, ref: "Channel" }],
     subscriptions: [
       {
-        type: mongoose.Schema.Types.ObjecteId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "Channel",
       },
     ],
