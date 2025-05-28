@@ -127,7 +127,6 @@ export const updateChannel = async (req, res) => {
   }
 };
 
-
 // Delete Channel its video and related comments
 
 export const deleteChannel = async (req, res) => {
@@ -141,7 +140,9 @@ export const deleteChannel = async (req, res) => {
     }
 
     if (!channel.owner.equals(userId)) {
-      return res.status(403).json({ message: "Unauthorized to delete the channel" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete the channel" });
     }
 
     // Delete all comments associated with the channel's videos
@@ -173,7 +174,10 @@ export const deleteChannel = async (req, res) => {
       try {
         await cloudinary.uploader.destroy(channel.bannerPublicId);
       } catch (err) {
-        console.error("Failed to delete channel banner from Cloudinary:", err.message);
+        console.error(
+          "Failed to delete channel banner from Cloudinary:",
+          err.message
+        );
       }
     }
 
@@ -190,8 +194,47 @@ export const deleteChannel = async (req, res) => {
     });
   } catch (err) {
     console.error("Error deleting channel:", err);
-    res.status(500).json({ message: err.message || "Failed to delete the channel" });
+    res
+      .status(500)
+      .json({ message: err.message || "Failed to delete the channel" });
   }
 };
 
+// Toggle subscription
+export const toggleSubscription = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const channelId = req.params.id;
 
+    const channel = await Channel.findById(channelId);
+    if (!channel) {
+      return res.status(404).json({ message: "Channel not found" });
+    }
+
+    const alreadySubscribed = channel.subscriberList.includes(userId);
+
+    if (alreadySubscribed) {
+      channel.subscriberList.pull(userId);
+    } else {
+      channel.subscriberList.push(userId);
+    }
+
+    channel.subscribes = channel.subscriberList.length;
+    await channel.save();
+    await channel.populate("owner", "username");
+
+    const user = await User.findById(userId);
+    if (alreadySubscribed) {
+      user.subscriptions.pull(channelId);
+    } else {
+      user.subscriptions.push(channelId);
+    }
+
+    await user.save();
+
+    res.status(200).json(channel);
+  } catch (err) {
+    console.error("Error toggling subscription:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
