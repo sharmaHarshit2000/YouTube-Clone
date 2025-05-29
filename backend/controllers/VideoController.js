@@ -101,7 +101,9 @@ export const updateVideo = async (req, res) => {
     if (!video) return res.status(404).json({ message: "Video not found" });
 
     if (video.uploader.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Unauthorized to update this video" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to update this video" });
     }
 
     const { title, description, category } = req.body;
@@ -113,10 +115,13 @@ export const updateVideo = async (req, res) => {
 
     const streamUpload = (fileBuffer, options) => {
       return new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
-          if (result) resolve(result);
-          else reject(err);
-        });
+        const stream = cloudinary.uploader.upload_stream(
+          options,
+          (err, result) => {
+            if (result) resolve(result);
+            else reject(err);
+          }
+        );
         streamifier.createReadStream(fileBuffer).pipe(stream);
       });
     };
@@ -170,11 +175,15 @@ export const deleteVideo = async (req, res) => {
     if (!video) return res.status(404).json({ message: "Video not found" });
 
     if (video.uploader.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Unauthorized to delete this video" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete this video" });
     }
 
     // Delete video and thumbnail from Cloudinary
-    await cloudinary.uploader.destroy(video.videoPublicId, { resource_type: "video" });
+    await cloudinary.uploader.destroy(video.videoPublicId, {
+      resource_type: "video",
+    });
     await cloudinary.uploader.destroy(video.thumbnailPublicId);
 
     // Delete all comments associated with this video
@@ -185,7 +194,7 @@ export const deleteVideo = async (req, res) => {
 
     // Remove video reference from channel.videos array
     await Channel.findByIdAndUpdate(video.channel, {
-      $pull: { videos: video._id }, 
+      $pull: { videos: video._id },
     });
 
     // Send response
@@ -196,7 +205,7 @@ export const deleteVideo = async (req, res) => {
   }
 };
 
-// Like video 
+// Like video
 export const likeVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
@@ -251,3 +260,40 @@ export const dislikeVideo = async (req, res) => {
     res.status(500).json({ error: "Failed to dislike video" });
   }
 };
+
+// Put video views id
+
+export const incraseViews = asyncHandler(async (req, res) => {
+  const video = await Video.findById(req.params.id);
+  if (!video) {
+    res.status(404);
+    throw new Error("Video not found");
+  }
+
+  video.views += 1;
+  await video.save();
+
+  res.status(200).json(video);
+});
+
+
+export const searchVideos = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+
+  if (!q || q.trim() === "") {
+    return res.status(400).json({ message: "Search term is required" });
+  }
+
+  // Case-insensitive partial match on title or description
+  const videos = await Video.find({
+    $or: [
+      { title: { $regex: q, $options: "i" } },
+      { description: { $regex: q, $options: "i" } },
+    ],
+  })
+    .sort({ createdAt: -1 })
+    .populate("uploader", "username")
+    .populate("channel", "channelName channelBanner");
+
+  res.status(200).json(videos);
+});
