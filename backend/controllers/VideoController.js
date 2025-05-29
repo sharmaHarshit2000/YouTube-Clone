@@ -162,3 +162,36 @@ export const updateVideo = async (req, res) => {
     res.status(500).json({ error: "Error updating video" });
   }
 };
+
+// Delete video
+export const deleteVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) return res.status(404).json({ message: "Video not found" });
+
+    if (video.uploader.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized to delete this video" });
+    }
+
+    // Delete video and thumbnail from Cloudinary
+    await cloudinary.uploader.destroy(video.videoPublicId, { resource_type: "video" });
+    await cloudinary.uploader.destroy(video.thumbnailPublicId);
+
+    // Delete all comments associated with this video
+    await Comment.deleteMany({ video: video._id });
+
+    // Delete the video document
+    await video.deleteOne();
+
+    // Remove video reference from channel.videos array
+    await Channel.findByIdAndUpdate(video.channel, {
+      $pull: { videos: video._id }, 
+    });
+
+    // Send response
+    res.status(200).json({ message: "Video deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error deleting video" });
+  }
+};
