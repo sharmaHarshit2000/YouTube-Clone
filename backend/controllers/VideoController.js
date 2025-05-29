@@ -11,7 +11,7 @@ import {
   uploadVideoToCloudinary,
   uploadThumbnailToCloudinary,
 } from "../config/cloudinary.js";
-import { resolve } from "path";
+
 
 // GET all vidoes
 

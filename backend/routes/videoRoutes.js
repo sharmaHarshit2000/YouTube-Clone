@@ -13,10 +13,13 @@ import {
 } from "../controllers/VideoController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { uploadBoth } from "../middleware/multer.js";
+import commentRoutes from "./commetRoutes.js"
 
 const router = express.Router();
 
-router.get("/serach", searchVideos);
+router.use("/:videoId/comments", commentRoutes);
+
+router.get("/search", searchVideos);
 router.get("/", getAllVideos);
 router.get("/:id", getVideoById);
 router.post("/upload", protect, uploadBoth, uploadVideo);
