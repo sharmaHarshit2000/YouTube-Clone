@@ -1,5 +1,5 @@
-import fs from "fs";
-import asyncHandler from "express-async handler";
+import asyncHandler from "express-async-handler";
+
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 
@@ -11,6 +11,7 @@ import {
   uploadVideoToCloudinary,
   uploadThumbnailToCloudinary,
 } from "../config/cloudinary.js";
+import { resolve } from "path";
 
 // GET all vidoes
 
@@ -45,3 +46,119 @@ export const getVideoById = async (req, res) => {
   }
 };
 
+// Upload video
+export const uploadVideo = asyncHandler(async (req, res) => {
+  const { title, description, category } = req.body;
+  const userId = req.user._id;
+
+  if (!req.files?.video?.[0] || !req.files?.thumbnail?.[0]) {
+    return res.status(400).json({ error: "Video and thumbnail are required" });
+  }
+
+  const channel = await Channel.findOne({ owner: userId });
+  if (!channel) {
+    return res.status(400).json({ message: "Channel not found for the user" });
+  }
+
+  try {
+    const videoResult = await uploadVideoToCloudinary(
+      req.files.video[0].buffer
+    );
+    const thumbnailResult = await uploadThumbnailToCloudinary(
+      req.files.thumbnail[0].buffer
+    );
+
+    const newVideo = await Video.create({
+      title,
+      description,
+      category,
+      uploader: userId,
+      channel: channel._id,
+      videoUrl: videoResult.secure_url,
+      videoPublicId: videoResult.public_id,
+      thumbnailUrl: thumbnailResult.secure_url,
+      thumbnailPublicId: thumbnailResult.public_id,
+      duration: Math.floor(videoResult.duration),
+    });
+
+    channel.videos.push(newVideo._id);
+    await channel.save();
+
+    res.status(201).json({
+      message: "Video uploaded successfully",
+      video: newVideo,
+    });
+  } catch (err) {
+    console.error("Video upload failed:", err);
+    res.status(500).json({ error: "Video upload failed" });
+  }
+});
+
+// Update Video
+export const updateVideo = async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video) return res.status(404).json({ message: "Video not found" });
+
+    if (video.uploader.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized to update this video" });
+    }
+
+    const { title, description, category } = req.body;
+
+    let videoUrl = video.videoUrl;
+    let videoPublicId = video.videoPublicId;
+    let thumbnailUrl = video.thumbnailUrl;
+    let thumbnailPublicId = video.thumbnailPublicId;
+
+    const streamUpload = (fileBuffer, options) => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(options, (err, result) => {
+          if (result) resolve(result);
+          else reject(err);
+        });
+        streamifier.createReadStream(fileBuffer).pipe(stream);
+      });
+    };
+
+    if (req.files?.video?.[0]) {
+      await cloudinary.uploader.destroy(video.videoPublicId, {
+        resource_type: "video",
+      });
+
+      const result = await streamUpload(req.files.video[0].buffer, {
+        resource_type: "video",
+        folder: "youtube-clone/videos",
+      });
+
+      videoUrl = result.secure_url;
+      videoPublicId = result.public_id;
+      video.duration = Math.floor(result.duration);
+    }
+
+    if (req.files?.thumbnail?.[0]) {
+      await cloudinary.uploader.destroy(video.thumbnailPublicId);
+
+      const result = await streamUpload(req.files.thumbnail[0].buffer, {
+        folder: "youtube-clone/thumbnails",
+      });
+
+      thumbnailUrl = result.secure_url;
+      thumbnailPublicId = result.public_id;
+    }
+
+    video.title = title || video.title;
+    video.description = description || video.description;
+    video.category = category || video.category;
+    video.videoUrl = videoUrl;
+    video.videoPublicId = videoPublicId;
+    video.thumbnailUrl = thumbnailUrl;
+    video.thumbnailPublicId = thumbnailPublicId;
+
+    const updatedVideo = await video.save();
+    res.json(updatedVideo);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error updating video" });
+  }
+};

@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 //API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/channels", channelRoutes);
-app.use("/api/videos", channelRoutes);
+app.use("/api/videos", videoRoutes);
 
 const PORT = process.env.PORT || 5000;
 
