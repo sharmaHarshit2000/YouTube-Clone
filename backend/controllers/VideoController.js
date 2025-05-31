@@ -12,7 +12,6 @@ import {
   uploadThumbnailToCloudinary,
 } from "../config/cloudinary.js";
 
-
 // GET all vidoes
 
 export const getAllVideos = async (req, res) => {
@@ -43,6 +42,21 @@ export const getVideoById = async (req, res) => {
     res.json({ video });
   } catch (err) {
     res.status(500).json({ error: "Error fetching video" });
+  }
+};
+
+//Get videos by loggedInuser
+
+export const getVideosByLoggedInUser = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const videosByUser = await Video.find({ uploader: userId }).populate("channel");
+
+    res.status(200).json(videosByUser);
+  } catch (err) {
+    console.error("Error fetching user's videos:", err);
+    res.status(500).json({ message: "Server error while fetching videos" });
   }
 };
 
@@ -276,7 +290,6 @@ export const incraseViews = asyncHandler(async (req, res) => {
   res.status(200).json(video);
 });
 
-
 export const searchVideos = asyncHandler(async (req, res) => {
   const { q } = req.query;
 
@@ -297,3 +310,6 @@ export const searchVideos = asyncHandler(async (req, res) => {
 
   res.status(200).json(videos);
 });
+
+
+
