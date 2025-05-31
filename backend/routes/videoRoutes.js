@@ -5,12 +5,13 @@ import {
   dislikeVideo,
   getAllVideos,
   getVideoById,
+  getVideosByLoggedInUser,
   incraseViews,
   likeVideo,
   searchVideos,
   updateVideo,
   uploadVideo,
-} from "../controllers/VideoController.js";
+} from "../controllers/videoController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { uploadBoth } from "../middleware/multer.js";
 import commentRoutes from "./commetRoutes.js"
@@ -22,6 +23,7 @@ router.use("/:videoId/comments", commentRoutes);
 router.get("/search", searchVideos);
 router.get("/", getAllVideos);
 router.get("/:id", getVideoById);
+router.get("/user", protect, getVideosByLoggedInUser);
 router.post("/upload", protect, uploadBoth, uploadVideo);
 router.put("/:id", protect, uploadBoth, updateVideo);
 router.delete("/:id", protect, deleteVideo);
