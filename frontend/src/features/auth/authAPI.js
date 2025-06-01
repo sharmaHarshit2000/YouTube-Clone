@@ -1,14 +1,15 @@
 import axiosInstance from "../../utils/axiosInstance";
 
-export const register = (formData) => {
-  axiosInstance.post("/auth/register", formData),
-    {
-      headers: { "Content-Type": "multipart/formData" },
-    };
-};
-
 export const login = (data) => {
-  axiosInstance.post("/auth/login", data);
+  return axiosInstance.post("/auth/login", data);
 };
 
-export const getMe = axiosInstance.get("/auth/me");
+export const register = (formData) => {
+  return axiosInstance.post("/auth/register", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+
+export const getMe = () => {
+  return axiosInstance.get("/auth/me");
+};
