@@ -1,12 +1,134 @@
-# React + Vite
+# 🎬 YouTube Clone - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to the **frontend** of a YouTube Clone built with **React**, **Redux Toolkit**, **Tailwind CSS**, and **Vite**. This project connects to an Express + MongoDB backend, providing full YouTube-like features: authentication, video uploads, channel management, likes, comments, and search.
 
-Currently, two official plugins are available:
+👉 **GitHub Repo:** [YouTube-Clone](https://github.com/sharmaHarshit2000/YouTube-Clone.git)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## ✨ Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- 🔐 JWT-based Authentication (Login/Register)
+- 📺 Watch and Upload Videos
+- 👤 Channel Management (Create, Edit, View)
+- 📥 Like/Dislike Videos
+- 💬 Comment System
+- 🔍 Search & Filter Videos
+- 📱 Fully Responsive UI
+- ⚛️ Global State via Redux Toolkit
+- ⚡ Fast bundling with Vite
+- 🎨 Styled with Tailwind CSS
+
+---
+
+## 📁 Project Structure
+
+```
+yotube-clone/
+├── backend/
+├── frontend/
+│   ├── node_modules/
+│   ├── public/
+│   │   └── react.svg
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── ChannelInfo.jsx
+│   │   │   ├── CommentSection.jsx
+│   │   │   ├── CommentsToggle.jsx
+│   │   │   ├── CreateChannelForm.jsx
+│   │   │   ├── DescriptionToggle.jsx
+│   │   │   ├── EditChannelModal.jsx
+│   │   │   ├── EditVideoForm.jsx
+│   │   │   ├── FilterBar.jsx
+│   │   │   ├── Header.jsx
+│   │   │   ├── Layout.jsx
+│   │   │   ├── LikeDislikeButtons.jsx
+│   │   │   ├── Loader.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   ├── SuggestedVideos.jsx
+│   │   │   ├── VideoCard.jsx
+│   │   │   ├── VideoCardWithActions.jsx
+│   │   │   └── VideoPlayer.jsx
+│   │   ├── features/
+│   │   │   ├── auth/
+│   │   │   │   ├── authAPI.js
+│   │   │   │   └── authSlice.js
+│   │   │   ├── channel/
+│   │   │   │   ├── channelAPI.js
+│   │   │   │   └── channelSlice.js
+│   │   │   ├── comments/
+│   │   │   │   ├── commentAPI.js
+│   │   │   │   └── commentSlice.js
+│   │   │   ├── search/
+│   │   │   │   ├── searchAPI.js
+│   │   │   │   └── searchSlice.js
+│   │   │   ├── ui/
+│   │   │   │   └── uiSlice.js
+│   │   │   └── video/
+│   │   │       ├── videoAPI.js
+│   │   │       └── videoSlice.js
+│   │   ├── hooks/
+│   │   ├── pages/
+│   │   │   ├── ChannelPage.jsx
+│   │   │   ├── CreateChannel.jsx
+│   │   │   ├── EditVideoPage.jsx
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── NotFound.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── UploadVideo.jsx
+│   │   │   └── VideoWatchPage.jsx
+│   │   ├── router/
+│   │   │   └── AppRouter.jsx
+│   │   ├── utils/
+│   │   │   ├── axiosInstance.js
+│   │   │   └── formatDuration.js
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   └── store.js
+│   ├── .gitignore
+│   ├── eslint.config.js
+│   └── index.html
+```
+
+---
+
+## 🛠️ Installation & Usage
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/sharmaHarshit2000/YouTube-Clone.git
+cd YouTube-Clone/frontend
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Start the Development Server
+
+```bash
+npm run dev
+```
+
+Open your browser and visit: [http://localhost:5173](http://localhost:5173)
+
+### 4. Build for Production
+
+```bash
+npm run build
+```
+
+---
+
+## 🙋‍♂️ Author
+
+**Harshit Sharma**  
+GitHub: [@sharmaHarshit2000](https://github.com/sharmaHarshit2000)
+
+---
