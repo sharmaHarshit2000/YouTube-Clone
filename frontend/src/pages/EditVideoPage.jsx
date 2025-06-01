@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getVideoById, updateVideo } from "../features/video/videoSlice";
 import EditVideoForm from "../components/EditVideoForm";
 import { toast } from "react-toastify";
-import Loader from "../components/Loader"; // Your global loader component
+import Loader from "../components/Loader"; 
 
 const EditVideoPage = () => {
   const { id } = useParams();

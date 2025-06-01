@@ -13,7 +13,7 @@ const UploadVideo = () => {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState(""); // ✅ Added category state
+  const [category, setCategory] = useState(""); 
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
@@ -45,7 +45,7 @@ const UploadVideo = () => {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("category", category); // ✅ Add category
+    formData.append("category", category); 
     formData.append("video", videoFile);
     formData.append("thumbnail", thumbnail);
 
@@ -87,7 +87,7 @@ const UploadVideo = () => {
           required
         />
 
-        {/* ✅ Category Selector */}
+        {/*  Category Selector */}
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
