@@ -25,6 +25,6 @@ export const uploadBoth = multer({ storage, fileFilter }).fields([
   { name: "thumbnail", maxCount: 1 },
 ]);
 
-export const uploadProfile = multer({ storage, fileFilter }).single("profile");
+export const uploadProfile = multer({ storage, fileFilter }).single("profilePic");
 
 export const uploadBanner = multer({ storage, fileFilter }).single("banner");
