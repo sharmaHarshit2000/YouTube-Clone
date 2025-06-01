@@ -4,6 +4,7 @@ import channelReducer from "./features/channel/channelSlice";
 import videoReducer from "./features/video/videoSlice";
 import commentReducer from "./features/comment/commetSlice";
 import searchReducer from "./features/search/searchSlice";
+import uiReducer from "./features/ui/uiSlice";
 export default configureStore({
   reducer: {
     auth: authReducer,
@@ -11,7 +12,6 @@ export default configureStore({
     videos: videoReducer,
     comments: commentReducer,
     search: searchReducer,
-  
-
+    ui: uiReducer,
   },
 });
