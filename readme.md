@@ -16,7 +16,7 @@ Watch a walkthrough of the YouTube Clone in action:
 
 ## 🔗 Live Demo & GitHub
 
-- **Live Demo**: [Click here to try the app](https://your-live-app-url.com)
+- **Live Demo**: [Click here to try the app](https://mytubefrontend.vercel.app/)
 - **GitHub Repo**: [YouTube Clone on GitHub](https://github.com/sharmaHarshit2000/YouTube-Clone)
 
 ---
