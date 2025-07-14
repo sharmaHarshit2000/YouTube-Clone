@@ -189,32 +189,32 @@ yotube-clone/
 ### 🏠 Home Page
 ![Home Page](./screenshots/homepage.png)
 
+### 📺 Video Watch Page
+![Video Watch](./screenshots/video-watch.png)
+
+### 📝 Register Page
+![Register](./screenshots/register.png)
+
+### 🔐 Login Page
+![Login](./screenshots/login.png)
+
+### 🆕 Create Channel Page
+![Create Channel](./screenshots/create-channel.png)
+
 ### 👤 Channel Page
 ![Channel Page](./screenshots/channel-page.png)
 
-### 📺 Video Watch Page
-![Video Watch](./screenshots/video-watch.png)
+### ✏️ Edit Channel Page
+![Edit Channel](./screenshots/edit-channel.png)
+
+### 🎬 Upload Video Page
+![Upload Video](./screenshots/upload-video.png)
 
 ### ✏️ Edit Video Page
 ![Edit Video](./screenshots/edit-video.png)
 
 ### 💬 Comment Section
 ![Comments](./screenshots/comment-section.png)
-
-### 🎬 Upload Video Page
-![Upload Video](./screenshots/upload-video.png)
-
-### 🆕 Create Channel Page
-![Create Channel](./screenshots/create-channel.png)
-
-### ✏️ Edit Channel Page
-![Edit Channel](./screenshots/edit-channel.png)
-
-### 🔐 Login Page
-![Login](./screenshots/login.png)
-
-### 📝 Register Page
-![Register](./screenshots/register.png)
 
 
 ---
