@@ -8,82 +8,71 @@ import {
   fetchVideoByIdAPI,
   likeVideoAPI,
   dislikeVideoAPI,
-  incrementViewCount,
 } from "./videoAPI";
 
-// Get single video
+// Thunks for async operations
+
 export const getVideoById = createAsyncThunk(
   "videos/getVideoById",
   async (id, thunkAPI) => {
     try {
-      const res = await fetchVideoByIdAPI(id);
-      return res;
+      return await fetchVideoByIdAPI(id);
     } catch (err) {
       return thunkAPI.rejectWithValue(err.message);
     }
   }
 );
 
-// Upload video
 export const uploadVideo = createAsyncThunk(
   "videos/uploadVideo",
   async (formData, { rejectWithValue }) => {
     try {
-      const response = await uploadVideoAPI(formData);
-      return response;
+      return await uploadVideoAPI(formData);
     } catch (error) {
-      console.error("Error in uploadVideo thunk:", error);
       return rejectWithValue(error.message);
     }
   }
 );
 
-// Fetch all videos
 export const fetchAllVideos = createAsyncThunk(
   "videos/fetchAllVideos",
   async (_, thunkAPI) => {
     try {
-      const res = await fetchAllVideosAPI();
-      return res;
+      return await fetchAllVideosAPI();
     } catch (err) {
       return thunkAPI.rejectWithValue(err.message);
     }
   }
 );
 
-// Fetch user's videos
 export const fetchMyVideos = createAsyncThunk(
   "videos/fetchMyVideos",
   async (_, thunkAPI) => {
     try {
-      const res = await fetchMyVideosAPI();
-      return res;
+      return await fetchMyVideosAPI();
     } catch (err) {
       return thunkAPI.rejectWithValue(err.message);
     }
   }
 );
 
-// Update video
 export const updateVideo = createAsyncThunk(
   "videos/updateVideo",
   async ({ id, formData }, thunkAPI) => {
     try {
-      const res = await updateVideoAPI({ id, formData });
-      return res;
+      return await updateVideoAPI({ id, formData });
     } catch (err) {
       return thunkAPI.rejectWithValue(err.message);
     }
   }
 );
 
-// Delete video
 export const deleteVideo = createAsyncThunk(
   "videos/deleteVideo",
   async (videoId, { rejectWithValue }) => {
     try {
-      const response = await deleteVideoAPI(videoId);
-      return response;
+      await deleteVideoAPI(videoId);
+      return { videoId };
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -94,8 +83,7 @@ export const likeVideo = createAsyncThunk(
   "videos/likeVideo",
   async (videoId, { rejectWithValue }) => {
     try {
-      const res = await likeVideoAPI(videoId);
-      return res;
+      return await likeVideoAPI(videoId);
     } catch (err) {
       return rejectWithValue(err.message);
     }
@@ -106,30 +94,14 @@ export const dislikeVideo = createAsyncThunk(
   "videos/dislikeVideo",
   async (videoId, { rejectWithValue }) => {
     try {
-      const res = await dislikeVideoAPI(videoId);
-      return res;
+      return await dislikeVideoAPI(videoId);
     } catch (err) {
       return rejectWithValue(err.message);
     }
   }
 );
 
-export const increaseViewCount = createAsyncThunk(
-  "videos/increaseViewCount",
-  async (videoId, thunkAPI) => {
-    try {
-      const response = await incrementViewCount(videoId);
-      return response;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to increase view count"
-      );
-    }
-  }
-);
-
-
-
+// Video Slice
 const videoSlice = createSlice({
   name: "videos",
   initialState: {
@@ -139,16 +111,14 @@ const videoSlice = createSlice({
     uploading: false,
     videoFetching: false,
     videoUpdating: false,
-    loading: false, 
+    loading: false,
     error: null,
     uploadedVideo: null,
-  
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
-
-      // Upload video
+      // Upload Video
       .addCase(uploadVideo.pending, (state) => {
         state.uploading = true;
         state.error = null;
@@ -156,13 +126,14 @@ const videoSlice = createSlice({
       .addCase(uploadVideo.fulfilled, (state, action) => {
         state.uploading = false;
         state.uploadedVideo = action.payload.video;
+        state.videos.unshift(action.payload.video); // Add to top
       })
       .addCase(uploadVideo.rejected, (state, action) => {
         state.uploading = false;
         state.error = action.payload;
       })
 
-      // Fetch all videos
+      // Fetch All Videos
       .addCase(fetchAllVideos.pending, (state) => {
         state.videoFetching = true;
         state.error = null;
@@ -176,7 +147,7 @@ const videoSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Fetch user's videos
+      // Fetch My Videos
       .addCase(fetchMyVideos.pending, (state) => {
         state.videoFetching = true;
         state.error = null;
@@ -190,7 +161,7 @@ const videoSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Update video
+      // Update Video
       .addCase(updateVideo.pending, (state) => {
         state.videoUpdating = true;
         state.error = null;
@@ -198,13 +169,14 @@ const videoSlice = createSlice({
       .addCase(updateVideo.fulfilled, (state, action) => {
         state.videoUpdating = false;
         const updated = action.payload;
-        const index = state.myVideos.findIndex((v) => v._id === updated._id);
-        if (index !== -1) state.myVideos[index] = updated;
 
-        const allIndex = state.videos.findIndex((v) => v._id === updated._id);
-        if (allIndex !== -1) state.videos[allIndex] = updated;
-
-        if (state.selectedVideo && state.selectedVideo._id === updated._id) {
+        state.myVideos = state.myVideos.map((video) =>
+          video._id === updated._id ? updated : video
+        );
+        state.videos = state.videos.map((video) =>
+          video._id === updated._id ? updated : video
+        );
+        if (state.selectedVideo?._id === updated._id) {
           state.selectedVideo = updated;
         }
       })
@@ -213,7 +185,7 @@ const videoSlice = createSlice({
         state.error = action.payload;
       })
 
-      // Delete video
+      // Delete Video
       .addCase(deleteVideo.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -221,15 +193,20 @@ const videoSlice = createSlice({
       .addCase(deleteVideo.fulfilled, (state, action) => {
         state.loading = false;
         const deletedId = action.payload.videoId;
-        state.videos = state.videos.filter((v) => v._id !== deletedId);
-        state.myVideos = state.myVideos.filter((v) => v._id !== deletedId);
+        state.videos = state.videos.filter((video) => video._id !== deletedId);
+        state.myVideos = state.myVideos.filter(
+          (video) => video._id !== deletedId
+        );
+        if (state.selectedVideo?._id === deletedId) {
+          state.selectedVideo = null;
+        }
       })
       .addCase(deleteVideo.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      // Get video by ID
+      // Get Video by ID
       .addCase(getVideoById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -243,39 +220,20 @@ const videoSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      // Like Video
       .addCase(likeVideo.fulfilled, (state, action) => {
-        const updatedVideo = action.payload;
-        if (
-          state.selectedVideo &&
-          state.selectedVideo._id === updatedVideo._id
-        ) {
-          state.selectedVideo = updatedVideo;
+        if (state.selectedVideo?._id === action.payload._id) {
+          state.selectedVideo = action.payload;
         }
       })
 
+      // Dislike Video
       .addCase(dislikeVideo.fulfilled, (state, action) => {
-        const updatedVideo = action.payload;
-        if (
-          state.selectedVideo &&
-          state.selectedVideo._id === updatedVideo._id
-        ) {
-          state.selectedVideo = updatedVideo;
+        if (state.selectedVideo?._id === action.payload._id) {
+          state.selectedVideo = action.payload;
         }
-      })
-
-      .addCase(increaseViewCount.fulfilled, (state, action) => {
-        
-        if (
-          state.selectedVideo &&
-          state.selectedVideo._id === action.payload._id
-        ) {
-          state.selectedVideo.views = action.payload.views;
-        }
-      })
-      .addCase(increaseViewCount.rejected, (state, action) => {
-        console.error("Failed to increase view count:", action.payload);
       });
-
   },
 });
 

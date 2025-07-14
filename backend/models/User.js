@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     profilePic: { type: String },
-    channels: [{ type: mongoose.Schema.Types.ObjectId, ref: "Channel" }],
+    channels: [{ type: mongoose.Schema.Types.ObjectId, ref: "Channel" }], // Store the refrence of Channel
     subscriptions: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -15,7 +15,6 @@ const userSchema = new mongoose.Schema(
     ],
   },
   { timestamps: true }
-
 );
 
 export default mongoose.model("User", userSchema);

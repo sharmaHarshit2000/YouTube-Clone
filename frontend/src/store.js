@@ -12,6 +12,7 @@ export default configureStore({
     videos: videoReducer,
     comments: commentReducer,
     search: searchReducer,
-    ui: uiReducer,
+     ui: uiReducer,
+
   },
 });

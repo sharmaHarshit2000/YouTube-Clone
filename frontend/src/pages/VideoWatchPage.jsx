@@ -1,20 +1,9 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getVideoById,
-  fetchAllVideos,
-  likeVideo,
-  dislikeVideo,
-  increaseViewCount,
-} from "../features/video/videoSlice";
-
-import {
-  subscribeToChannel,
-  unsubscribeFromChannel,
-  getChannel,
-} from "../features/channel/channelSlice";
-
+import { getVideoById, likeVideo, dislikeVideo, fetchAllVideos } from "../features/video/videoSlice";
+import { clearChannelState, getChannel, setCurrentChannel, subscribeToChannel, unsubscribeFromChannel } from "../features/channel/channelSlice";
+import { toast } from "react-toastify";
 import Loader from "../components/Loader";
 import VideoPlayer from "../components/VideoPlayer";
 import ChannelInfo from "../components/ChannelInfo";
@@ -23,123 +12,130 @@ import DescriptionToggle from "../components/DescriptionToggle";
 import CommentsToggle from "../components/CommentsToggle";
 import SuggestedVideos from "../components/SuggestedVideos";
 
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
 const VideoWatchPage = () => {
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isChannelLoading, setIsChannelLoading] = useState(false);
   const { videoId } = useParams();
   const dispatch = useDispatch();
 
+  // Redux state selectors
   const { selectedVideo: video, videos, loading, error } = useSelector((state) => state.videos);
   const { user } = useSelector((state) => state.auth);
   const { currentChannel } = useSelector((state) => state.channel);
 
-  const isSubscribed = useMemo(() => {
-    if (!user || !currentChannel?.subscribersList) return false;
-    return currentChannel.subscribersList.includes(user._id);
-  }, [user?._id, currentChannel?.subscribersList]);
+  // Derived values
+  const isMyChannel = user?.channels?.[0]?._id === video?.channel?._id;
+  const normalizedChannel = currentChannel?.channel || currentChannel;
 
+  const isSubscribed = useMemo(() => (
+    !isMyChannel && normalizedChannel?.subscribersList?.some(subId => subId.toString() === user?._id)
+  ), [user, normalizedChannel, isMyChannel]);
+
+  // Load video and channel data
   useEffect(() => {
     if (videoId) {
       dispatch(getVideoById(videoId));
-      dispatch(fetchAllVideos());
-      dispatch(increaseViewCount(videoId));
     }
+    return () => dispatch(clearChannelState());
   }, [dispatch, videoId]);
 
   useEffect(() => {
     if (video?.channel?._id) {
-      dispatch(getChannel(video.channel._id));
-    }
-  }, [dispatch, video?.channel?._id]);
+      const loadChannel = async () => {
+        setIsChannelLoading(true);
+        try {
+          const freshChannel = await dispatch(getChannel(video.channel._id)).unwrap();
+          dispatch(setCurrentChannel({
+            ...freshChannel,
+            isMyChannel: user?.channels?.[0]?._id === video.channel._id,
+            videos: freshChannel.videos || []
+          }));
+          dispatch(fetchAllVideos());
 
-  const handleLike = () => {
-    if (!user) {
-      return toast.info("Please log in to like the video.");
+        } catch (err) {
+          console.error("Failed to fetch channel:", err);
+        } finally {
+          setIsChannelLoading(false);
+        }
+      };
+      loadChannel();
     }
-    dispatch(likeVideo(videoId));
-  };
-
-  const handleDislike = () => {
-    if (!user) {
-      return toast.info("Please log in to dislike the video.");
-    }
-    dispatch(dislikeVideo(videoId));
-  };
+  }, [dispatch, video?.channel?._id, user?.channels]);
 
   const handleSubscription = async () => {
-    if (!user) return toast.info("Please log in to subscribe.");
+    if (!normalizedChannel?._id) return toast.error("Channel information missing");
+    setIsSubscribing(true);
     try {
-      if (isSubscribed) {
-        await dispatch(unsubscribeFromChannel(currentChannel._id)).unwrap();
-        toast.success("Unsubscribed from the channel.");
-      } else {
-        await dispatch(subscribeToChannel(currentChannel._id)).unwrap();
-        toast.success("Subscribed to the channel.");
-      }
-      dispatch(getChannel(video.channel._id));
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+      const action = isSubscribed ? unsubscribeFromChannel : subscribeToChannel;
+      await dispatch(action(normalizedChannel._id)).unwrap();
+      toast.success(isSubscribed ? "Unsubscribed!" : "Subscribed!");
+    } catch (error) {
+      toast.error(error.payload || "Subscription failed");
+    } finally {
+      setIsSubscribing(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader />
-      </div>
-    );
-  }
+  const handleLikeDislike = (action) => {
+    if (!user) return toast.info("Please log in to continue");
+    dispatch(action(videoId));
+  };
 
-  if (error) {
-    return (
-      <div className="text-red-600 text-center p-6 bg-red-50 border border-red-200 rounded max-w-xl mx-auto mt-10">
-        <h2 className="text-xl font-semibold">Error loading video</h2>
-        <p>{error}</p>
-      </div>
-    );
-  }
-
-  if (!video) {
-    return (
-      <div className="text-center text-gray-600 p-6 mt-10">
-        <h2 className="text-xl font-semibold">Video Not Found</h2>
-        <p>This video may have been removed or the URL is incorrect.</p>
-      </div>
-    );
-  }
+  if (loading) return <Loader fullScreen />;
+  if (error) return <ErrorDisplay error={error} />;
+  if (!video) return <VideoNotFound />;
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 p-4 max-w-7xl mx-auto">
-      {/* Left section: Video and details */}
-      <section className="md:w-2/3 w-full flex flex-col space-y-6">
+    <div className="flex flex-col lg:flex-row gap-6 p-4 md:p-6 max-w-screen-2xl mx-auto">
+      <section className="w-full lg:w-[68%] flex flex-col space-y-6">
         <VideoPlayer video={video} />
-        <ChannelInfo
-          video={video}
-          currentChannel={currentChannel}
-          isSubscribed={isSubscribed}
-          onSubscribeToggle={handleSubscription}
-          user={user}
-        />
+        <h1 className="text-xl md:text-2xl font-semibold text-gray-900">{video.title}</h1>
+
         <LikeDislikeButtons
           video={video}
-          onLike={handleLike}
-          onDislike={handleDislike}
+          onLike={() => handleLikeDislike(likeVideo)}
+          onDislike={() => handleLikeDislike(dislikeVideo)}
           user={user}
         />
-        <DescriptionToggle description={video.description} />
+
+        <ChannelInfo
+          channelData={isMyChannel ? user?.channels?.[0] : normalizedChannel}
+          uploader={video.uploader}
+          user={user}
+          isSubscribed={isSubscribed}
+          onSubscribe={handleSubscription}
+          isLoading={isChannelLoading}
+          isSubscribing={isSubscribing}
+        />
+
+        <DescriptionToggle
+          description={video.description}
+          views={video.views}
+          uploadDate={video.createdAt}
+        />
+
         <CommentsToggle videoId={video._id} />
       </section>
 
-      {/* Right section: Suggested videos */}
-      <aside className="md:w-1/3 w-full max-h-[calc(100vh-100px)] overflow-y-auto sticky top-24">
-        <SuggestedVideos
-          videos={videos.filter((v) => v._id !== video._id)}
-          currentVideoId={video._id}
-        />
+      <aside className="w-full lg:w-[32%] sticky top-0 self-start h-[calc(100vh-5rem)] overflow-y-auto pr-1">
+        <SuggestedVideos videos={videos.filter(v => v._id !== video._id)} currentVideoId={video._id} />
       </aside>
     </div>
   );
 };
+
+const ErrorDisplay = ({ error }) => (
+  <div className="text-red-600 text-center p-6 bg-red-50 border border-red-200 rounded max-w-xl mx-auto mt-10">
+    <h2 className="text-xl font-semibold">Error loading video</h2>
+    <p>{error}</p>
+  </div>
+);
+
+const VideoNotFound = () => (
+  <div className="text-center text-gray-600 p-6 mt-10">
+    <h2 className="text-xl font-semibold">Video Not Found</h2>
+    <p>This video may have been removed or the URL is incorrect.</p>
+  </div>
+);
 
 export default VideoWatchPage;

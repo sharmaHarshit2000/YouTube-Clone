@@ -1,5 +1,4 @@
 import asyncHandler from "express-async-handler";
-
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 
@@ -12,69 +11,62 @@ import {
   uploadThumbnailToCloudinary,
 } from "../config/cloudinary.js";
 
-// GET all vidoes
-
+// GET all videos with uploader and channel info, sorted by newest
 export const getAllVideos = async (req, res) => {
   try {
-    const videos = await Video.find({})
+    const videos = await Video.find()
       .sort({ createdAt: -1 })
-      .populate("uploader", "username")
+      .populate("uploader", "username profilePic")
       .populate("channel", "channelName channelBanner");
     res.json(videos);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch videos" });
+    res.status(500).json({ error: "Failed to fetch videos" });
   }
 };
 
-// GET single video by Id (with comments and uploader)
+// GET single video by ID and increment its views atomically
 export const getVideoById = async (req, res) => {
   try {
-    const video = await Video.findById(req.params.id)
-      .populate("uploader", "username")
-      .populate("channel", "channelName channelBanner")
-      .populate({
-        path: "comments",
-        populate: { path: "author", select: "username" },
-        options: { sort: { createdAt: -1 } },
-      });
-
+    const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ message: "Video not found" });
-    res.json({ video });
+
+    // Increment views count on each fetch
+    video.views += 1;
+    await video.save();
+
+    // Populate uploader, channel, and comments with authors sorted newest first
+    await video.populate("uploader", "username");
+    await video.populate("channel", "channelName channelBanner subscribers subscribersList videos");
+    await video.populate({
+      path: "comments",
+      populate: { path: "author", select: "username" },
+      options: { sort: { createdAt: -1 } },
+    });
+
+    res.json(video);
   } catch (err) {
     res.status(500).json({ error: "Error fetching video" });
   }
 };
 
-//Get videos by loggedInuser
-
-export const getVideosByLoggedInUser = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const videosByUser = await Video.find({ uploader: userId }).populate("channel");
-
-    res.status(200).json(videosByUser);
-  } catch (err) {
-    console.error("Error fetching user's videos:", err);
-    res.status(500).json({ message: "Server error while fetching videos" });
-  }
-};
-
-// Upload video
+// UPLOAD video with associated thumbnail and save references to DB
 export const uploadVideo = asyncHandler(async (req, res) => {
   const { title, description, category } = req.body;
   const userId = req.user._id;
 
   if (!req.files?.video?.[0] || !req.files?.thumbnail?.[0]) {
-    return res.status(400).json({ error: "Video and thumbnail are required" });
+    return res
+      .status(400)
+      .json({ error: "Video and thumbnail files are required." });
   }
 
   const channel = await Channel.findOne({ owner: userId });
   if (!channel) {
-    return res.status(400).json({ message: "Channel not found for the user" });
+    return res.status(404).json({ error: "Channel not found for the user." });
   }
 
   try {
+    // Upload video and thumbnail to Cloudinary
     const videoResult = await uploadVideoToCloudinary(
       req.files.video[0].buffer
     );
@@ -82,6 +74,7 @@ export const uploadVideo = asyncHandler(async (req, res) => {
       req.files.thumbnail[0].buffer
     );
 
+    // Create video document with returned Cloudinary URLs and metadata
     const newVideo = await Video.create({
       title,
       description,
@@ -95,12 +88,18 @@ export const uploadVideo = asyncHandler(async (req, res) => {
       duration: Math.floor(videoResult.duration),
     });
 
+    // Add video reference to the channel's videos array
     channel.videos.push(newVideo._id);
     await channel.save();
 
+    // Populate uploader and channel details before sending response
+    const populatedVideo = await Video.findById(newVideo._id)
+      .populate("uploader", "username")
+      .populate("channel", "channelName channelBanner");
+
     res.status(201).json({
       message: "Video uploaded successfully",
-      video: newVideo,
+      video: populatedVideo,
     });
   } catch (err) {
     console.error("Video upload failed:", err);
@@ -108,12 +107,13 @@ export const uploadVideo = asyncHandler(async (req, res) => {
   }
 });
 
-// Update Video
+// UPDATE video details and optionally replace video and/or thumbnail files
 export const updateVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ message: "Video not found" });
 
+    // Only uploader can update their video
     if (video.uploader.toString() !== req.user._id.toString()) {
       return res
         .status(403)
@@ -121,12 +121,12 @@ export const updateVideo = async (req, res) => {
     }
 
     const { title, description, category } = req.body;
-
     let videoUrl = video.videoUrl;
     let videoPublicId = video.videoPublicId;
     let thumbnailUrl = video.thumbnailUrl;
     let thumbnailPublicId = video.thumbnailPublicId;
 
+    // Helper to upload buffer stream to Cloudinary with specified options
     const streamUpload = (fileBuffer, options) => {
       return new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -140,35 +140,34 @@ export const updateVideo = async (req, res) => {
       });
     };
 
+    // If new video file provided, delete old video from Cloudinary and upload new one
     if (req.files?.video?.[0]) {
       await cloudinary.uploader.destroy(video.videoPublicId, {
         resource_type: "video",
       });
-
       const result = await streamUpload(req.files.video[0].buffer, {
         resource_type: "video",
         folder: "youtube-clone/videos",
       });
-
       videoUrl = result.secure_url;
       videoPublicId = result.public_id;
       video.duration = Math.floor(result.duration);
     }
 
+    // If new thumbnail provided, delete old thumbnail and upload new one
     if (req.files?.thumbnail?.[0]) {
       await cloudinary.uploader.destroy(video.thumbnailPublicId);
-
       const result = await streamUpload(req.files.thumbnail[0].buffer, {
         folder: "youtube-clone/thumbnails",
       });
-
       thumbnailUrl = result.secure_url;
       thumbnailPublicId = result.public_id;
     }
 
+    // Update video document fields
     video.title = title || video.title;
     video.description = description || video.description;
-    video.category = category || video.category;
+    video.category = category;
     video.videoUrl = videoUrl;
     video.videoPublicId = videoPublicId;
     video.thumbnailUrl = thumbnailUrl;
@@ -182,12 +181,13 @@ export const updateVideo = async (req, res) => {
   }
 };
 
-// Delete video
+// DELETE video and all associated data (Cloudinary files, comments, and channel references)
 export const deleteVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ message: "Video not found" });
 
+    // Only uploader can delete their video
     if (video.uploader.toString() !== req.user._id.toString()) {
       return res
         .status(403)
@@ -200,26 +200,24 @@ export const deleteVideo = async (req, res) => {
     });
     await cloudinary.uploader.destroy(video.thumbnailPublicId);
 
-    // Delete all comments associated with this video
+    // Remove all comments related to the video
     await Comment.deleteMany({ video: video._id });
 
-    // Delete the video document
+    // Delete video document
     await video.deleteOne();
 
-    // Remove video reference from channel.videos array
+    // Remove video reference from channel's videos array
     await Channel.findByIdAndUpdate(video.channel, {
       $pull: { videos: video._id },
     });
 
-    // Send response
-    res.status(200).json({ message: "Video deleted successfully" });
+    res.json({ message: "Video and associated comments deleted successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error deleting video" });
+    res.status(500).json({ error: "Error deleting video" });
   }
 };
 
-// Like video
+// Like video with toggle behavior and remove dislike if present
 export const likeVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
@@ -228,26 +226,27 @@ export const likeVideo = async (req, res) => {
     const userId = req.user._id.toString();
 
     if (video.likes.includes(userId)) {
+      // If already liked, remove like (toggle off)
       video.likes = video.likes.filter((id) => id.toString() !== userId);
     } else {
+      // Add like and remove dislike if any
       video.dislikes = video.dislikes.filter((id) => id.toString() !== userId);
       video.likes.push(userId);
     }
 
     await video.save();
 
+    // Return updated video with populated uploader and channel info
     const updatedVideo = await Video.findById(video._id)
       .populate("channel", "channelName channelBanner")
       .populate("uploader", "username");
-
     res.json(updatedVideo);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Failed to like video" });
   }
 };
 
-// Dislike video
+// Dislike video with toggle behavior and remove like if present
 export const dislikeVideo = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
@@ -256,40 +255,27 @@ export const dislikeVideo = async (req, res) => {
     const userId = req.user._id.toString();
 
     if (video.dislikes.includes(userId)) {
+      // If already disliked, remove dislike (toggle off)
       video.dislikes = video.dislikes.filter((id) => id.toString() !== userId);
     } else {
+      // Add dislike and remove like if any
       video.likes = video.likes.filter((id) => id.toString() !== userId);
       video.dislikes.push(userId);
     }
 
     await video.save();
 
+    // Return updated video with populated uploader and channel info
     const updatedVideo = await Video.findById(video._id)
       .populate("channel", "channelName channelBanner")
       .populate("uploader", "username");
-
     res.json(updatedVideo);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Failed to dislike video" });
   }
 };
 
-// Put video views id
-
-export const incraseViews = asyncHandler(async (req, res) => {
-  const video = await Video.findById(req.params.id);
-  if (!video) {
-    res.status(404);
-    throw new Error("Video not found");
-  }
-
-  video.views += 1;
-  await video.save();
-
-  res.status(200).json(video);
-});
-
+// Search videos by partial title or description match, case-insensitive
 export const searchVideos = asyncHandler(async (req, res) => {
   const { q } = req.query;
 
@@ -297,7 +283,6 @@ export const searchVideos = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Search term is required" });
   }
 
-  // Case-insensitive partial match on title or description
   const videos = await Video.find({
     $or: [
       { title: { $regex: q, $options: "i" } },
@@ -310,6 +295,3 @@ export const searchVideos = asyncHandler(async (req, res) => {
 
   res.status(200).json(videos);
 });
-
-
-

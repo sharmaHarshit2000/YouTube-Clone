@@ -1,12 +1,11 @@
+# Root ignores (in case)
+.env
 
-# Frontend ignores
-
-frontend/node_modules
+# Node modules and uploads from subfolders
+frontend/node_modules/
 frontend/.env
-frontend/dist
+frontend/dist/
 
-
-# Backend ignores
-
-backend/node_modules
+backend/node_modules/
 backend/.env
+backend/uploads/

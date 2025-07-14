@@ -1,23 +1,18 @@
 # 🎬 YouTube Clone – Full Stack Project
 
-A full-featured YouTube Clone built with the **MERN Stack** – MongoDB, Express.js, React, and Node.js.  
-Includes user authentication, channel creation, video upload/playback, commenting, liking/disliking, and responsive UI.  
-Media (videos, thumbnails, profile pictures) is managed using **Cloudinary**.
+A full-featured YouTube Clone built with the MERN Stack: MongoDB, Express, React, and Node.js, using Cloudinary for media storage.
 
 ## 🎥 Demo Video
 
 Watch a walkthrough of the YouTube Clone in action:
 
-[![YouTube Clone Demo](https://res.cloudinary.com/dqtucqury/image/upload/v1749326813/youtube-clone/thumbnails/gmsst5rirgcwp9kserkr.jpg)](https://res.cloudinary.com/dqtucqury/video/upload/v1749326810/youtube-clone/videos/wv0pvzd2546cyytobbii.mp4)
-
-> Click the image above to watch the demo video hosted on Cloudinary.
+[![YouTube Clone Demo]()]()
 
 ---
 
-## 🔗 Live Demo & GitHub
+## 🔗 Live Demo / GitHub
 
-- **Live Demo**: [Click here to try the app](https://mytubefrontend.vercel.app/)
-- **GitHub Repo**: [YouTube Clone on GitHub](https://github.com/sharmaHarshit2000/YouTube-Clone)
+[YouTube-Clone](https://github.com/sharmaHarshit2000/YouTube-Clone)
 
 ---
 

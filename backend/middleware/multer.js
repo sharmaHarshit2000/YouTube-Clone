@@ -9,7 +9,7 @@ const fileFilter = (req, file, cb) => {
     "image/jpg",
     "video/mp4",
     "video/quicktime",    
-    "video/x-msvideo",    
+    "video/x-msvideo",   
   ];
 
   if (allowedMimeTypes.includes(file.mimetype)) {
@@ -25,6 +25,6 @@ export const uploadBoth = multer({ storage, fileFilter }).fields([
   { name: "thumbnail", maxCount: 1 },
 ]);
 
-export const uploadProfile = multer({ storage, fileFilter }).single("profilePic");
+export const uploadProfile = multer({ storage, fileFilter }).single("profile");
 
 export const uploadBanner = multer({ storage, fileFilter }).single("banner");

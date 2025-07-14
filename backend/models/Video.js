@@ -19,36 +19,20 @@ const videoSchema = new mongoose.Schema(
       ref: "Channel",
       required: true,
     },
-    likes: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    dislikes: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",
-      },
-    ],
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
     duration: {
       type: Number,
-      required: true,
     },
+
     views: {
       type: Number,
       default: 0,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-export default mongoose.model("Video", videoSchema);
+const Video = mongoose.model("Video", videoSchema);
+export default Video;

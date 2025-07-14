@@ -8,17 +8,9 @@ import {
 } from "../config/cloudinary.js";
 import { nanoid } from "nanoid";
 
-// Create Channel
 export const createChannel = async (req, res) => {
   try {
-    const { channelName, description } = req.body;
-
-    if (!channelName || !description) {
-      return res.status(400).json({
-        message: "Both channelName and description are required.",
-      });
-    }
-
+    // Prevent user from creating multiple channels
     const existingChannel = await Channel.findOne({ owner: req.user._id });
     if (existingChannel) {
       return res.status(400).json({ message: "You already have a channel." });
@@ -27,23 +19,25 @@ export const createChannel = async (req, res) => {
     let channelBanner = null;
     let bannerPublicId = null;
 
+    // If banner file exists, upload to Cloudinary and save public ID for deletion later
     if (req.file) {
       try {
         const result = await uploadChanelBannerToCloudinary(req.file.buffer);
         channelBanner = result.secure_url;
         bannerPublicId = result.public_id;
       } catch (uploadErr) {
-        console.error("Cloudinary Upload Error", uploadErr);
+        console.error("Cloudinary Upload Error:", uploadErr);
         return res
           .status(500)
           .json({ message: "Failed to upload banner image" });
       }
     }
 
+    // Create channel with unique nanoid as channelId
     const newChannel = new Channel({
       channelId: nanoid(12),
-      channelName,
-      description,
+      channelName: req.body.channelName,
+      description: req.body.description,
       channelBanner,
       bannerPublicId,
       owner: req.user._id,
@@ -51,6 +45,7 @@ export const createChannel = async (req, res) => {
 
     const savedChannel = await newChannel.save();
 
+    // Add newly created channel to user's channels array
     await User.findByIdAndUpdate(
       req.user._id,
       { $push: { channels: savedChannel._id } },
@@ -59,33 +54,43 @@ export const createChannel = async (req, res) => {
 
     return res.status(201).json(savedChannel);
   } catch (err) {
-    console.error("Error in createChannel", err);
-    return res.status(500).json({
-      message: "Failed to create channel",
-      error: err.message,
-    });
+    console.error("Error in createChannel:", err);
+    return res
+      .status(500)
+      .json({ error: err.message || "Failed to create channel" });
   }
 };
 
-// GET channel with videos
-
 export const getChannel = async (req, res) => {
   try {
-    const channel = await Channel.findById(req.params.id);
+    const channel = await Channel.findById(req.params.id)
+      .populate("owner", "username profilePic")
+      .lean();
+
     if (!channel) {
       return res.status(404).json({ message: "Channel not found" });
     }
 
-    // Fetch videos linked to this channel
+    // Calculate subscriber count based on subscribersList array length
+    const subscriberCount = channel.subscribersList?.length || 0;
+
+    // Fetch all videos belonging to this channel
     const videos = await Video.find({ channel: channel._id });
-    res.json({ channel, videos });
+
+    res.json({
+      channel: {
+        ...channel,
+        subscribers: subscriberCount,
+        subscribersList: channel.subscribersList || [],
+      },
+      videos,
+    });
   } catch (err) {
-    console.error("Error in getChannel", err.message);
+    console.error("Error in getChannel:", err.message);
     res.status(500).json({ error: "Error fetching channel" });
   }
 };
 
-// Update Channel
 export const updateChannel = async (req, res) => {
   try {
     const channelId = req.params.id;
@@ -96,6 +101,7 @@ export const updateChannel = async (req, res) => {
       return res.status(404).json({ message: "Channel not found" });
     }
 
+    // Ensure only the owner can update their channel
     if (channel.owner.toString() !== userId.toString()) {
       return res
         .status(403)
@@ -104,30 +110,27 @@ export const updateChannel = async (req, res) => {
 
     const { channelName, description } = req.body;
 
-    // If a new banner is uploaded
     if (req.file) {
-      // Delete the old banner form cloudinary
+      // Delete existing banner from Cloudinary before uploading new one
       if (channel.bannerPublicId) {
         await cloudinary.uploader.destroy(channel.bannerPublicId);
       }
 
-      // Upload new banner
       const result = await uploadChanelBannerToCloudinary(req.file.buffer);
       channel.channelBanner = result.secure_url;
       channel.bannerPublicId = result.public_id;
     }
+
     if (channelName) channel.channelName = channelName;
     if (description) channel.description = description;
 
     await channel.save();
     res.status(200).json(channel);
   } catch (err) {
-    console.error("Error updating channel", err);
+    console.error("Error updating channel:", err);
     res.status(500).json({ message: "Server Error" });
   }
 };
-
-// Delete Channel its video and related comments
 
 export const deleteChannel = async (req, res) => {
   try {
@@ -142,15 +145,17 @@ export const deleteChannel = async (req, res) => {
     if (!channel.owner.equals(userId)) {
       return res
         .status(403)
-        .json({ message: "Unauthorized to delete the channel" });
+        .json({ message: "Unauthorized to delete this channel" });
     }
 
-    // Delete all comments associated with the channel's videos
+    // Fetch all videos to delete related data (comments, Cloudinary media)
     const videos = await Video.find({ channel: channel._id });
     const videoIds = videos.map((video) => video._id);
+
+    // Delete all comments associated with channel's videos
     await Comment.deleteMany({ video: { $in: videoIds } });
 
-    // Delete Cloudinary media for each video
+    // Remove Cloudinary stored video files and thumbnails
     for (const video of videos) {
       try {
         if (video.videoPublicId) {
@@ -169,7 +174,7 @@ export const deleteChannel = async (req, res) => {
     // Delete videos from DB
     await Video.deleteMany({ channel: channel._id });
 
-    // Delete channel banner from Cloudinary
+    // Delete channel banner image from Cloudinary
     if (channel.bannerPublicId) {
       try {
         await cloudinary.uploader.destroy(channel.bannerPublicId);
@@ -181,60 +186,74 @@ export const deleteChannel = async (req, res) => {
       }
     }
 
-    // Delete channel from DB
+    // Delete channel document itself
     await channel.deleteOne();
 
-    // Remove reference from User
+    // Remove channel reference from user's channels array
     await User.findByIdAndUpdate(userId, {
-      $pull: { channel: channel._id },
+      $pull: { channels: channel._id },
     });
 
-    res.status(200).json({
+    res.json({
       message: "Channel, its videos, banner, and comments deleted successfully",
     });
   } catch (err) {
     console.error("Error deleting channel:", err);
-    res
-      .status(500)
-      .json({ message: err.message || "Failed to delete the channel" });
+    res.status(500).json({ error: err.message || "Failed to delete channel" });
   }
 };
 
-// Toggle subscription
 export const toggleSubscription = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const channelId = req.params.id;
+  const userId = req.user._id;
+  const channelId = req.params.id;
 
+  try {
     const channel = await Channel.findById(channelId);
     if (!channel) {
       return res.status(404).json({ message: "Channel not found" });
     }
 
-    const alreadySubscribed = channel.subscriberList.includes(userId);
+    // Check if user is already subscribed to channel
+    const alreadySubscribed = channel.subscribersList.includes(userId);
 
+    // Toggle subscription status
     if (alreadySubscribed) {
-      channel.subscriberList.pull(userId);
+      channel.subscribersList.pull(userId);
     } else {
-      channel.subscriberList.push(userId);
+      channel.subscribersList.push(userId);
     }
 
-    channel.subscribes = channel.subscriberList.length;
+    // Update subscriber count for channel document
+    channel.subscribers = channel.subscribersList.length;
     await channel.save();
-    await channel.populate("owner", "username");
 
+    // Reflect subscription change in user's subscriptions array
     const user = await User.findById(userId);
     if (alreadySubscribed) {
       user.subscriptions.pull(channelId);
     } else {
       user.subscriptions.push(channelId);
     }
-
     await user.save();
 
-    res.status(200).json(channel);
+    // Populate owner info for updated channel response
+    const updatedChannel = await Channel.findById(channelId)
+      .populate("owner", "username profilePic")
+      .lean();
+
+    res.status(200).json({
+      _id: updatedChannel._id,
+      channelName: updatedChannel.channelName,
+      channelBanner: updatedChannel.channelBanner,
+      subscribers: updatedChannel.subscribers,
+      subscribersList: updatedChannel.subscribersList,
+      owner: updatedChannel.owner,
+      isMyChannel: updatedChannel.owner?._id === req.user._id,
+    });
   } catch (err) {
-    console.error("Error toggling subscription:", err);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in toggleSubscription:", err);
+    res
+      .status(500)
+      .json({ message: "Server error while toggling subscription" });
   }
 };

@@ -5,33 +5,48 @@ import { formatDuration } from "../utils/formatDuration";
 const VideoCard = ({ video }) => {
   if (!video) return null;
 
+  const {
+    _id,
+    title = "Untitled Video",
+    thumbnailUrl,
+    duration,
+    views = 0,
+    createdAt,
+    channel = {},
+  } = video;
+
+  const {
+    channelName = "Unknown Channel",
+    channelBanner,
+  } = channel;
+
   return (
     <Link
-      to={`/video/${video._id}`}
-      className="w-full sm:max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg transition-transform hover:scale-105 group rounded-lg shadow-lg bg-white overflow-hidden"
-      aria-label={`Watch video titled ${video.title}`}
+      to={`/video/${_id}`}
+      className="w-full group rounded-lg bg-white shadow-md overflow-hidden transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500"
+      aria-label={`Watch video titled ${title}`}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-gray-100 rounded-t-lg overflow-hidden shadow-sm">
+      <div className="relative aspect-video bg-gray-100 overflow-hidden rounded-t-lg">
         <img
-          src={video.thumbnailUrl || "/default-thumbnail.jpg"}
-          alt={video.title}
+          src={thumbnailUrl || "/images/default-thumbnail.jpg"}
+          alt={title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           loading="lazy"
         />
-        {video.duration && (
-          <span className="absolute bottom-2 right-2 text-xs bg-black bg-opacity-75 text-white px-2 py-0.5 rounded-md font-mono select-none">
-            {formatDuration(video.duration)}
+        {duration && (
+          <span className="absolute bottom-2 right-2 text-xs bg-black bg-opacity-75 text-white px-2 py-0.5 rounded-md font-mono">
+            {formatDuration(duration)}
           </span>
         )}
       </div>
 
-      {/* Video Info */}
+      {/* Info */}
       <div className="flex gap-4 p-4">
-        {/* Channel Avatar */}
+        {/* Avatar */}
         <img
-          src={video.channel?.channelBanner || "/default-avatar.png"}
-          alt={`${video.channel?.channelName || "Channel"} avatar`}
+          src={channelBanner || "/images/channel-banner.jpeg"}
+          alt={`${channelName} avatar`}
           className="w-12 h-12 rounded-full object-cover border border-gray-300 flex-shrink-0"
           loading="lazy"
         />
@@ -39,16 +54,19 @@ const VideoCard = ({ video }) => {
         {/* Text Info */}
         <div className="flex flex-col overflow-hidden">
           <h3
-            className="text-base font-semibold leading-tight text-gray-900 line-clamp-2"
-            title={video.title}
+            className="text-base font-semibold leading-snug text-gray-900 line-clamp-2"
+            title={title}
           >
-            {video.title}
+            {title}
           </h3>
-          <p className="text-sm text-gray-600 truncate mt-1" title={video.channel?.channelName}>
-            {video.channel?.channelName || "Unknown Channel"}
+          <p
+            className="text-sm text-gray-600 truncate mt-1"
+            title={channelName}
+          >
+            {channelName}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
-            {video.views?.toLocaleString() || 0} views • {moment(video.createdAt).fromNow()}
+          <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
+            {views.toLocaleString()} views • {moment(createdAt).fromNow()}
           </p>
         </div>
       </div>

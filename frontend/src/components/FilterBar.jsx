@@ -2,20 +2,25 @@ const filters = ['All', 'Music', 'Gaming', 'News', 'Sports', 'Education', 'Enter
 
 export default function FilterBar({ selectedFilter, onSelectFilter }) {
   return (
-    <div className="flex gap-6 overflow-x-auto py-3 px-4 scrollbar-hide">
+    <div className="flex gap-3 md:gap-4 lg:gap-5 overflow-x-auto py-3 px-4 scrollbar-hide bg-white border-b border-gray-200">
       {filters.map((filter) => {
+        // Check if this filter is currently selected
         const isActive = selectedFilter === filter;
+
         return (
           <button
             key={filter}
-            onClick={() => onSelectFilter(filter)}
+            onClick={() => onSelectFilter(filter)} // Call parent handler to change filter
             className={`
-              px-6 py-2 text-base font-semibold rounded-full whitespace-nowrap
-              transition-colors duration-300 shadow-sm
-              ${isActive
-                ? 'bg-black text-white shadow-md'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:text-black'}
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
+              px-4 md:px-5 py-1.5 md:py-2 text-sm md:text-base font-medium rounded-full
+              whitespace-nowrap transition-all duration-200
+              ${
+                // Apply different styles based on whether the button is active
+                isActive
+                  ? 'bg-black text-white shadow' // Active button styles
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200' // Inactive button styles with hover effect
+              }
+              focus:outline-none focus:ring-2 focus:ring-blue-500
             `}
           >
             {filter}

@@ -7,14 +7,17 @@ import {
 } from "react-icons/fa";
 
 export default function Sidebar() {
+  // Get sidebar open/close state from Redux store
   const { isSidebarOpen } = useSelector((state) => state.ui);
 
+  // Sidebar main navigation links with routes
   const mainLinks = [
     { name: "Home", icon: <FaHome />, path: "/" },
     { name: "Shorts", icon: <FaStream />, path: "/" },
     { name: "Subscriptions", icon: <FaPlay />, path: "/" },
   ];
 
+  // User-specific links
   const youLinks = [
     { name: "History", icon: <FaHistory /> },
     { name: "Playlists", icon: <FaStream /> },
@@ -22,6 +25,7 @@ export default function Sidebar() {
     { name: "Liked videos", icon: <FaHeart /> },
   ];
 
+  // Explore section links 
   const exploreLinks = [
     { name: "Trending", icon: <FaFire /> },
     { name: "Shopping", icon: <FaShoppingCart /> },
@@ -36,15 +40,16 @@ export default function Sidebar() {
   return (
     <aside
       className={`
-    top-16 left-0 h-[calc(100vh-4rem)] bg-gray-50 border-r border-gray-300 z-40
-    w-60 transform transition-transform duration-300 ease-in-out
-    ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-    fixed lg:fixed overflow-y-auto
-    scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
-  `}
+        top-16 left-0 h-[calc(100vh-4rem)] bg-gray-50 border-r border-gray-300 z-40
+        w-60 transform transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed lg:fixed overflow-y-auto
+        scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100
+      `}
       style={{ minWidth: '200px' }}
     >
       <div className="pt-4 space-y-6">
+        {/* Main navigation links */}
         <section>
           <h3 className="text-xs font-semibold text-gray-500 mb-3 px-5 uppercase tracking-wide">Home</h3>
           {mainLinks.map((link) => (
@@ -59,9 +64,11 @@ export default function Sidebar() {
           ))}
         </section>
 
+        {/* User-related links */}
         <section>
           <h3 className="text-xs font-semibold text-gray-500 mb-3 px-5 uppercase tracking-wide">You</h3>
           {youLinks.map((link) => (
+
             <div
               key={link.name}
               className="flex items-center gap-4 py-2 px-5 rounded hover:bg-gray-200 text-sm text-gray-800 cursor-pointer transition-colors"
@@ -72,9 +79,11 @@ export default function Sidebar() {
           ))}
         </section>
 
+        {/* Explore section links */}
         <section>
           <h3 className="text-xs font-semibold text-gray-500 mb-3 px-5 uppercase tracking-wide">Explore</h3>
           {exploreLinks.map((link) => (
+
             <div
               key={link.name}
               className="flex items-center gap-4 py-2 px-5 rounded hover:bg-gray-200 text-sm text-gray-800 cursor-pointer transition-colors"

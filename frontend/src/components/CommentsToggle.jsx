@@ -5,18 +5,23 @@ export default function CommentsToggle({ videoId }) {
   const [showComments, setShowComments] = useState(true);
 
   return (
-    <div className="mb-6 bg-gray-100 p-4 rounded-lg shadow">
+    <div className="mb-8 bg-[#f9f9f9] p-4 sm:p-6 rounded-xl shadow-sm w-full max-w-3xl mx-auto">
+      {/* Toggle Button */}
       <button
-        className="font-medium text-blue-600 hover:underline"
+        className="text-sm font-semibold text-blue-600 hover:underline"
         onClick={() => setShowComments((prev) => !prev)}
       >
         {showComments ? "Hide Comments" : "Show Comments"}
       </button>
-      {showComments && (
-        <div className="mt-4">
-          <CommentSection videoId={videoId} />
-        </div>
-      )}
+
+      {/* Animated Toggle Section */}
+      <div
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+          showComments ? "max-h-[1000px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-2"
+        } mt-4`}
+      >
+        {showComments && <CommentSection videoId={videoId} />}
+      </div>
     </div>
   );
 }

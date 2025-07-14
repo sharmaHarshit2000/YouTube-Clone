@@ -1,52 +1,61 @@
 import { useState } from "react";
-import moment from "moment";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
 export default function VideoPlayer({ video }) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true); // Controls loading overlay
+  const [error, setError] = useState(false); // Tracks if video failed to load
 
+  // Called when video has successfully loaded
   const handleLoadedData = () => {
-    setLoading(false);
+    setLoading(false); // Hide loading overlay
   };
 
+  // Called when there's an error loading the video
   const handleError = () => {
     setLoading(false);
-    setError(true);
-    toast.error("Failed to load video.");
+    setError(true); // Mark error state
+    toast.error("Failed to load video."); // Show toast notification
   };
+
+  // Return fallback UI if video object is missing
+  if (!video) {
+    return (
+      <div className="text-center text-red-500 text-base font-semibold py-6">
+        No video data available.
+      </div>
+    );
+  }
 
   return (
     <>
-      <div className="aspect-video mb-4 relative w-full">
+      {/* Video container with aspect ratio and styling */}
+      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-md mb-6">
+        
+        {/* Loading overlay while video is still buffering */}
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10 rounded-xl">
-            <div className="text-white font-semibold animate-pulse">Loading video...</div>
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black bg-opacity-60">
+            <span className="text-white text-base font-medium animate-pulse">
+              Loading video...
+            </span>
           </div>
         )}
 
         <video
           src={video.videoUrl}
           controls
-          className={`w-full h-full rounded-xl shadow-lg ${loading ? "opacity-0" : "opacity-100"} transition-opacity duration-300`}
           onLoadedData={handleLoadedData}
           onError={handleError}
+          className={`w-full h-full object-contain transition-opacity duration-300 ${
+            loading ? "opacity-0" : "opacity-100" // Fade in video once loaded
+          }`}
         />
       </div>
 
-      {error ? (
-        <div className="text-red-600 text-sm font-medium mb-2">Unable to display video.</div>
-      ) : (
-        <>
-          <h1 className="text-xl font-bold mb-2">{video.title}</h1>
-
-          <div className="flex flex-wrap justify-between items-center text-sm text-gray-600 mb-4">
-            <span>{moment(video.createdAt).fromNow()}</span>
-            <span className="text-xs sm:text-sm">
-              {video.views || 0} views • {video.likes?.length || 0} Likes • {video.dislikes?.length || 0} Dislikes
-            </span>
-          </div>
-        </>
+      {/* Error message if video fails to load */}
+      {error && (
+        <div className="text-center text-base text-red-600 font-semibold mb-4">
+          Unable to display video. Please try again later.
+        </div>
       )}
     </>
   );

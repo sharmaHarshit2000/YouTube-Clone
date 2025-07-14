@@ -1,15 +1,13 @@
-import axiosInstance from "../../utils/axiosInstance";
+import axiosInstance from '../../utils/axiosInstance';
 
-export const login = (data) => {
-  return axiosInstance.post("/auth/login", data);
-};
-
-export const register = (formData) => {
-  return axiosInstance.post("/auth/register", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+// Register user with form data (multipart required for file upload like profile pictures)
+export const register = (formData) =>
+  axiosInstance.post('/auth/register', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   });
-};
 
-export const getMe = () => {
-  return axiosInstance.get("/auth/me");
-};
+// Login user with basic JSON data
+export const login = (data) => axiosInstance.post('/auth/login', data);
+
+// Fetch currently logged-in user details using stored JWT token
+export const getMe = () => axiosInstance.get('/auth/me');

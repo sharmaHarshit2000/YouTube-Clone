@@ -15,7 +15,7 @@ export const createChannel = createAsyncThunk(
     try {
       const response = await createChannelAPI(formData);
       await thunkAPI.dispatch(fetchUser());
-      return response; // Backend sends the entire channel object
+      return response;
     } catch (err) {
       return thunkAPI.rejectWithValue(
         err.response?.data?.message || "Error creating channel"
@@ -24,17 +24,28 @@ export const createChannel = createAsyncThunk(
   }
 );
 
-// Get Channel
+// Get channel + its videos
 export const getChannel = createAsyncThunk(
   "channel/getChannel",
   async (id, thunkAPI) => {
     try {
+      const state = thunkAPI.getState();
+      const loggedInUserId = state.auth?.user?._id;
+
       const response = await fetchChannelAPI(id);
+      const isMyChannel =
+        response?.channel?.owner?._id &&
+        response.channel.owner._id === loggedInUserId;
+
       return {
         channel: response.channel,
         videos: response.videos || [],
+        isMyChannel,
       };
     } catch (err) {
+      if (err.response?.status === 404) {
+        return thunkAPI.rejectWithValue("404");
+      }
       return thunkAPI.rejectWithValue(
         err.response?.data?.message || "Error fetching channel"
       );
@@ -42,7 +53,6 @@ export const getChannel = createAsyncThunk(
   }
 );
 
-// Update Channel
 export const updateChannel = createAsyncThunk(
   "channel/updateChannel",
   async ({ id, updateData }, thunkAPI) => {
@@ -57,7 +67,6 @@ export const updateChannel = createAsyncThunk(
   }
 );
 
-// Delete Channel
 export const deleteChannel = createAsyncThunk(
   "channel/deleteChannel",
   async (id, thunkAPI) => {
@@ -73,37 +82,43 @@ export const deleteChannel = createAsyncThunk(
   }
 );
 
+// Subscription toggle thunks
 export const subscribeToChannel = createAsyncThunk(
   "channel/subscribe",
-  async (channelId, { dispatch, rejectWithValue }) => {
+  async (channelId, { rejectWithValue }) => {
     try {
-      const data = await toggleSubscription(channelId); 
-      dispatch(fetchUser()); 
+      const data = await toggleSubscription(channelId);
       return data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Error subscribing"
+      );
     }
   }
 );
 
 export const unsubscribeFromChannel = createAsyncThunk(
   "channel/unsubscribe",
-  async (channelId, { dispatch, rejectWithValue }) => {
+  async (channelId, { rejectWithValue }) => {
     try {
-      const data = await toggleSubscription(channelId); 
-      dispatch(fetchUser()); 
+      const data = await toggleSubscription(channelId);
       return data;
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(
+        err.response?.data?.message || err.message || "Error unsubscribing"
+      );
     }
   }
 );
+
 const channelSlice = createSlice({
   name: "channel",
   initialState: {
     currentChannel: null,
+    myChannel: null,
     videos: [],
     loading: false,
+    subscriptionLoading: false,
     error: null,
   },
   reducers: {
@@ -111,41 +126,50 @@ const channelSlice = createSlice({
       state.currentChannel = null;
       state.videos = [];
       state.error = null;
+      state.loading = false;
+      state.myChannel = null;
+    },
+    setCurrentChannel: (state, action) => {
+      state.currentChannel = action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Create Channel
+      // Create
       .addCase(createChannel.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(createChannel.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentChannel = action.payload; 
+        state.currentChannel = action.payload;
+        state.myChannel = action.payload;
       })
       .addCase(createChannel.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          action.payload || action.error.message || "Failed to create channel";
+        state.error = action.payload || action.error.message;
       })
 
-      // Get Channel
+      // Get
       .addCase(getChannel.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(getChannel.fulfilled, (state, action) => {
         state.loading = false;
-        state.currentChannel = action.payload.channel;
-        state.videos = action.payload.videos;
+        const { channel, videos, isMyChannel } = action.payload;
+        state.currentChannel = channel;
+        state.videos = videos;
+        if (isMyChannel) {
+          state.myChannel = channel;
+        }
       })
       .addCase(getChannel.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || action.error.message;
       })
 
-      // Update Channel
+      // Update
       .addCase(updateChannel.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -156,10 +180,10 @@ const channelSlice = createSlice({
       })
       .addCase(updateChannel.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || action.error.message;
       })
 
-      // Delete Channel
+      // Delete
       .addCase(deleteChannel.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -167,41 +191,85 @@ const channelSlice = createSlice({
       .addCase(deleteChannel.fulfilled, (state) => {
         state.loading = false;
         state.currentChannel = null;
+        state.myChannel = null;
         state.videos = [];
       })
       .addCase(deleteChannel.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || action.error.message;
       })
 
+      // Subscribe
       .addCase(subscribeToChannel.pending, (state) => {
-        state.loading = true;
+        state.subscriptionLoading = true;
         state.error = null;
       })
       .addCase(subscribeToChannel.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentChannel = action.payload;
+        state.subscriptionLoading = false;
+        if (!state.currentChannel) return;
+
+        const { subscribers, subscribersList } = action.payload;
+
+        // Handle both possible channel structures
+        state.currentChannel = {
+          ...state.currentChannel,
+          ...(state.currentChannel.channel
+            ? {
+                channel: {
+                  ...state.currentChannel.channel,
+                  subscribers,
+                  subscribersList,
+                },
+              }
+            : {
+                subscribers,
+                subscribersList,
+              }),
+          subscribers,
+          subscribersList,
+        };
       })
       .addCase(subscribeToChannel.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        state.subscriptionLoading = false;
+        state.error = action.payload || action.error.message;
       })
 
       // Unsubscribe
       .addCase(unsubscribeFromChannel.pending, (state) => {
-        state.loading = true;
+        state.subscriptionLoading = true;
         state.error = null;
       })
       .addCase(unsubscribeFromChannel.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentChannel = action.payload;
+        state.subscriptionLoading = false;
+        if (!state.currentChannel) return;
+
+        const { subscribers, subscribersList } = action.payload;
+
+        // Handle both possible channel structures
+        state.currentChannel = {
+          ...state.currentChannel,
+          ...(state.currentChannel.channel
+            ? {
+                channel: {
+                  ...state.currentChannel.channel,
+                  subscribers,
+                  subscribersList,
+                },
+              }
+            : {
+                subscribers,
+                subscribersList,
+              }),
+          subscribers,
+          subscribersList,
+        };
       })
       .addCase(unsubscribeFromChannel.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        state.subscriptionLoading = false;
+        state.error = action.payload || action.error.message;
       });
   },
 });
 
-export const { clearChannelState } = channelSlice.actions;
+export const { clearChannelState, setCurrentChannel } = channelSlice.actions;
 export default channelSlice.reducer;
