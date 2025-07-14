@@ -21,9 +21,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173", // for local development
-      "https://mytubefrontend.vercel.app", // your main domain
-      /\.mytubefrontend\.vercel\.app$/, // all subdomains
-      "https://mytubefrontend-*.vercel.app" // all preview deployments
+      "https://mytubefrontend.vercel.app", // main domain
     ],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,

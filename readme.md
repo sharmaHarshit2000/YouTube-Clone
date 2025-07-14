@@ -1,59 +1,88 @@
+
 # 🎬 YouTube Clone – Full Stack Project
 
-A full-featured YouTube Clone built with the MERN Stack: MongoDB, Express, React, and Node.js, using Cloudinary for media storage.
-
-## 🎥 Demo Video
-
-Watch a walkthrough of the YouTube Clone in action:
-
-[![YouTube Clone Demo]()]()
+A full-featured YouTube Clone built with the **MERN Stack**: MongoDB, Express, React, and Node.js, using Cloudinary for media storage, Redux Toolkit for state management, and Tailwind CSS for styling.
 
 ---
 
-## 🔗 Live Demo / GitHub
+## 🎥 Demo Video
 
-[YouTube-Clone](https://github.com/sharmaHarshit2000/YouTube-Clone)
+Watch a real video hosted via Cloudinary:
+
+🔗 [Watch Demo](https://res.cloudinary.com/dqtucqury/video/upload/v1749326810/youtube-clone/videos/wv0pvzd2546cyytobbii.mp4)
+
+---
+
+## 🔗 Live Demo & Source Code
+
+🌐 **Frontend**: [https://mytubefrontend.vercel.app](https://mytubefrontend.vercel.app)  
+🔧 **Backend**: [https://mytube-backend-7438.onrender.com](https://mytube-backend-7438.onrender.com)  
+💻 **GitHub**: [YouTube-Clone Repository](https://github.com/sharmaHarshit2000/YouTube-Clone)
 
 ---
 
 ## 📦 Tech Stack
 
 ### 🌐 Frontend
-
-- **React** (with Vite)
+- **React 19** (with Vite)
 - **Redux Toolkit** – Global state management
 - **Tailwind CSS** – Utility-first styling
 - **Axios** – HTTP requests
+- **React Router DOM**
 
-### 🔧 Backend
-
+### 🛠 Backend
 - **Node.js + Express** – RESTful APIs
 - **MongoDB + Mongoose** – NoSQL database
 - **Cloudinary** – Video, thumbnail, and image storage
-- **Multer + Streamifier** – Media upload handlers
-- **JWT & bcrypt** – Secure authentication
-- **dotenv** – Environment configuration
+- **Multer + Streamifier** – File uploads
+- **JWT & bcrypt** – Authentication & security
+- **dotenv** – Environment variable handling
 
 ---
 
 ## ✨ Features
 
-- 🔐 **Authentication:** Register/Login with JWT
-- 🎦 **Video Uploading and Streaming**
-- 👤 **Channel Management** (Create/Edit/Delete)
-- 💬 **Comment System** (Add/Edit/Delete)
-- 👍 **Like/Dislike Functionality**
-- 🔎 **Video Search and Filter**
-- 📱 **Responsive Design**
-- 📂 **My Channel Dashboard**
-- 🔁 **Subscriptions**
+- 🔐 **JWT-based Authentication**
+- 👤 **Channel Management** (Create, Edit, Delete)
+- 🎥 **Video Uploading with Thumbnails**
+- 📺 **Video Streaming & Player**
+- 💬 **Comment System** (Add, Edit, Delete)
+- 👍 **Like/Dislike Feature**
+- 🔍 **Search and Filter Videos**
+- 📲 **Fully Responsive Design**
+- 📂 **User’s Dashboard: My Channel**
+- 🔁 **Subscribe/Unsubscribe to Channels**
 
 ---
 
-## 📁 Folder Structure
+## 🧾 .env Configuration
+
+### 📁 Frontend – `frontend/.env`
+
+```
+VITE_API_URL=https://mytube-backend-7438.onrender.com/api
+# or for local dev:
+# VITE_API_URL=http://localhost:5000/api
+```
+
+### 📁 Backend – `backend/.env`
+
+```
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/youtubeClone
+JWT_SECRET=my_secure_jwt_secret
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+```
+
+---
+
+## 🧱 Folder Structure
 
 <details>
-<summary>Click to expand</summary>
+<summary>Click to Expand</summary>
 
 ```
 yotube-clone/
@@ -147,10 +176,46 @@ yotube-clone/
 │   │   └── store.js
 │   ├── .gitignore
 │   ├── eslint.config.js
+|   ├── .env
 │   └── index.html
 ```
 
 </details>
+
+---
+
+## 📸 Screenshots
+
+### 🏠 Home Page
+![Home Page](./screenshots/homepage.png)
+
+### 👤 Channel Page
+![Channel Page](./screenshots/channel-page.png)
+
+### 📺 Video Watch Page
+![Video Watch](./screenshots/video-watch.png)
+
+### ✏️ Edit Video Page
+![Edit Video](./screenshots/edit-video.png)
+
+### 💬 Comment Section
+![Comments](./screenshots/comment-section.png)
+
+### 🎬 Upload Video Page
+![Upload Video](./screenshots/upload-video.png)
+
+### 🆕 Create Channel Page
+![Create Channel](./screenshots/create-channel.png)
+
+### ✏️ Edit Channel Page
+![Edit Channel](./screenshots/edit-channel.png)
+
+### 🔐 Login Page
+![Login](./screenshots/login.png)
+
+### 📝 Register Page
+![Register](./screenshots/register.png)
+
 
 ---
 
@@ -159,17 +224,9 @@ yotube-clone/
 ### 🖥️ Backend Setup
 
 ```bash
-# Clone repo & navigate
 git clone https://github.com/sharmaHarshit2000/YouTube-Clone.git
 cd YouTube-Clone/backend
-
-# Install dependencies
 npm install
-
-# Configure .env file
-# Add MongoDB URI, JWT_SECRET, Cloudinary credentials, etc.
-
-# Start server
 npm run start
 # Runs on http://localhost:5000
 ```
@@ -178,91 +235,52 @@ npm run start
 
 ```bash
 cd ../frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 # Runs on http://localhost:5173
 ```
 
 ---
 
-## 🔌 API Routes
+## 📡 API Endpoints Overview
 
-### 🔐 Auth Routes – `/api/auth`
+### 🔐 Auth – `/api/auth`
+| Method | Endpoint    | Description                         |
+|--------|-------------|-------------------------------------|
+| POST   | /register   | Register a new user                 |
+| POST   | /login      | Login user                          |
+| GET    | /me         | Fetch authenticated user details    |
 
-| Method | Endpoint  | Description                                     |
-| ------ | --------- | ----------------------------------------------- |
-| POST   | /register | Register a new user (with profile image upload) |
-| POST   | /login    | Login a user                                    |
-| GET    | /me       | Get logged-in user info (protected)             |
+### 🎥 Videos – `/api/videos`
+| Method | Endpoint         | Description                        |
+|--------|------------------|------------------------------------|
+| GET    | /                | Get all videos                     |
+| GET    | /search          | Search videos                      |
+| GET    | /user            | Get user’s videos                  |
+| GET    | /:id             | Get video by ID                    |
+| POST   | /upload          | Upload new video                   |
+| PUT    | /:id             | Update video                       |
+| DELETE | /:id             | Delete video                       |
+| POST   | /:id/like        | Like/unlike video                  |
+| POST   | /:id/dislike     | Dislike/remove dislike             |
+| PATCH  | /:id/views       | Increment view count               |
 
-### 📺 Video Routes – `/api/videos`
+### 💬 Comments – `/api/videos/:videoId/comments`
+| Method | Endpoint                        | Description               |
+|--------|---------------------------------|---------------------------|
+| POST   | /                               | Add comment               |
+| GET    | /                               | Get comments for video    |
+| PUT    | /:commentId                     | Edit comment              |
+| DELETE | /:commentId                     | Delete comment            |
 
-| Method | Endpoint     | Description                                 |
-| ------ | ------------ | ------------------------------------------- |
-| GET    | /search      | Search videos                               |
-| GET    | /            | Get all videos                              |
-| GET    | /user        | Get videos uploaded by logged-in user       |
-| GET    | /:id         | Get a single video by ID                    |
-| POST   | /upload      | Upload a new video (with thumbnail + video) |
-| PUT    | /:id         | Update a video (protected, with new files)  |
-| DELETE | /:id         | Delete a video (protected)                  |
-| POST   | /:id/like    | Like or unlike a video                      |
-| POST   | /:id/dislike | Dislike or remove dislike                   |
-| PATCH  | /:id/views   | Increase view count                         |
-
-### 💬 Comment Routes – `/api/videos/:videoId/comments`
-
-| Method | Endpoint                                 | Description                  |
-| ------ | ---------------------------------------- | ---------------------------- |
-| POST   | /api/videos/:videoId/comments            | Add a comment (protected)    |
-| GET    | /api/videos/:videoId/comments            | Get comments on a video      |
-| PUT    | /api/videos/:videoId/comments/:commentId | Edit a comment (protected)   |
-| DELETE | /api/videos/:videoId/comments/:commentId | Delete a comment (protected) |
-
-✅ Comments are nested under videos, using `mergeParams: true`.
-
-### 📡 Channel Routes – `/api/channels`
-
-| Method | Endpoint       | Description                       |
-| ------ | -------------- | --------------------------------- |
-| POST   | /              | Create a channel (with banner)    |
-| GET    | /:id           | Get a channel by ID               |
-| PUT    | /:id           | Update channel info (with banner) |
-| DELETE | /:id           | Delete a channel                  |
-| POST   | /:id/subscribe | Toggle subscription to a channel  |
-
----
-
-## 🛠 Scripts
-
-### Backend
-
-| Script        | Description               |
-| ------------- | ------------------------- |
-| npm run start | Start server with Nodemon |
-
-### Frontend
-
-| Script        | Description                   |
-| ------------- | ----------------------------- |
-| npm run dev   | Start Vite dev server         |
-| npm run build | Build frontend for production |
-
----
-
-## 📦 Notable Packages
-
-### Backend
-
-express, mongoose, jsonwebtoken, bcrypt, cloudinary, multer, streamifier, dotenv, cors, nanoid, express-async-handler
-
-### Frontend
-
-react, redux-toolkit, axios, react-router-dom, tailwindcss, vite, react-icons, react-hot-toast
+### 📺 Channels – `/api/channels`
+| Method | Endpoint        | Description                    |
+|--------|-----------------|--------------------------------|
+| POST   | /               | Create a new channel           |
+| GET    | /:id            | Get channel by ID              |
+| PUT    | /:id            | Update channel info            |
+| DELETE | /:id            | Delete channel                 |
+| POST   | /:id/subscribe  | Toggle subscription            |
 
 ---
 
@@ -270,3 +288,8 @@ react, redux-toolkit, axios, react-router-dom, tailwindcss, vite, react-icons, r
 
 **Harshit Sharma**  
 GitHub: [@sharmaHarshit2000](https://github.com/sharmaHarshit2000)
+
+---
+
+## ⭐ Like the project?
+If you find this project helpful, consider giving it a ⭐ on GitHub!

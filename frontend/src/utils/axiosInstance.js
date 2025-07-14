@@ -1,6 +1,6 @@
 import axios from "axios";
 const axiosInstance = axios.create({
- baseURL: "https://mytube-backend-7438.onrender.com/api",
+ baseURL: import.meta.env.VITE_API_URL,
 });
 
 // Attach JWT token from localStorage to every request if available
